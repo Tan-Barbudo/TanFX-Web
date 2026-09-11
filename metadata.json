@@ -1,0 +1,6 @@
+{
+  "name": "TAN FX - Performance Soundboard",
+  "description": "Professional soundboard for live performances designed by Payaso Tan Barbudo for clowns, entertainers, DJs, magicians, and live performers.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
