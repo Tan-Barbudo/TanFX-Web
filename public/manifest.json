@@ -1,10 +1,10 @@
 {
-  "id": "/",
+  "id": "/TanFX-Web/",
   "name": "TAN FX - Performance Soundboard",
   "short_name": "TAN FX",
   "description": "Consola profesional de sonido para shows en vivo diseñada por Payaso Tan Barbudo para payasos, animadores, magos, iglesias y artistas en vivo.",
-  "start_url": "/",
-  "scope": "/",
+  "start_url": "/TanFX-Web/",
+  "scope": "/TanFX-Web/",
   "display": "standalone",
   "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
   "orientation": "any",
@@ -16,25 +16,25 @@
   "prefer_related_applications": false,
   "icons": [
     {
-      "src": "/pwa-192x192.png",
+      "src": "/TanFX-Web/pwa-192x192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/pwa-512x512.png",
+      "src": "/TanFX-Web/pwa-512x512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/pwa-maskable-512x512.png",
+      "src": "/TanFX-Web/pwa-maskable-512x512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
     },
     {
-      "src": "/icon.svg",
+      "src": "/TanFX-Web/icon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any"
@@ -45,10 +45,10 @@
       "name": "Consola TAN FX",
       "short_name": "Consola",
       "description": "Abrir soundboard de presentación en vivo",
-      "url": "/",
+      "url": "/TanFX-Web/",
       "icons": [
         {
-          "src": "/pwa-192x192.png",
+          "src": "/TanFX-Web/pwa-192x192.png",
           "sizes": "192x192",
           "type": "image/png"
         }
