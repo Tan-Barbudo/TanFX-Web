@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { Show, Bank, SoundPad, PadPlaybackStatus, BgmPlaybackStatus } from './types';
 import { storage, createEmptyBank, createDefaultShow } from './services/storage';
 import { audioEngine } from './services/audioEngine';
+import { activateShow, duplicateShow, persistAndActivateShow, resolveInitialShow } from './services/showManagement';
 import { Header } from './components/Header';
 import { BankBar } from './components/BankBar';
 import { PadGrid } from './components/PadGrid';
@@ -75,7 +76,7 @@ export default function App() {
 
         setShows(loadedShows);
         const storedActiveId = await storage.getActiveShowId();
-        const initialShow = (storedActiveId && loadedShows.find((s) => s.id === storedActiveId)) || loadedShows[0];
+        const initialShow = resolveInitialShow(loadedShows, storedActiveId);
 
         if (initialShow) {
           setActiveShowId(initialShow.id);
@@ -89,6 +90,8 @@ export default function App() {
             audioEngine.setBgmVolume(initialShow.bgm.volume);
             audioEngine.setBgmLoop(initialShow.bgm.loop);
             audioEngine.setBgmDuckLevel(initialShow.bgm.duckLevel);
+          } else {
+            audioEngine.clearBgmTrack();
           }
         }
       } catch (err) {
@@ -461,31 +464,29 @@ export default function App() {
   };
 
   // Show Management Handlers
+  const activateShowInState = (show: Show) =>
+    activateShow(show, {
+      storage,
+      audioEngine,
+      setActiveShowId,
+      setActiveBankId,
+      setMasterVolume,
+    });
+
   const handleSelectShow = async (showId: string) => {
     const targetShow = shows.find((s) => s.id === showId);
     if (!targetShow) return;
-
-    setActiveShowId(targetShow.id);
-    setActiveBankId(targetShow.activeBankId || targetShow.banks[0]?.id || '');
-    setMasterVolume(targetShow.masterVolume ?? 1.0);
-    audioEngine.setMasterVolume(targetShow.masterVolume ?? 1.0);
-    await storage.setActiveShowId(targetShow.id);
-
-    if (targetShow.bgm.fileId) {
-      audioEngine.setBgmTrack(targetShow.bgm.fileId).catch(console.error);
-      audioEngine.setBgmVolume(targetShow.bgm.volume);
-      audioEngine.setBgmLoop(targetShow.bgm.loop);
-      audioEngine.setBgmDuckLevel(targetShow.bgm.duckLevel);
-    }
+    await activateShowInState(targetShow);
   };
 
   const handleCreateShow = async (name: string) => {
     const newId = `show_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
     const newShow = createDefaultShow(newId, name);
-    await storage.saveShow(newShow);
-
-    setShows((prev) => [...prev, newShow]);
-    await handleSelectShow(newId);
+    await persistAndActivateShow(newShow, {
+      saveShow: storage.saveShow.bind(storage),
+      addShow: (show) => setShows((prev) => [...prev, show]),
+      activate: activateShowInState,
+    });
   };
 
   const handleRenameShow = async (showId: string, newName: string) => {
@@ -506,17 +507,13 @@ export default function App() {
     if (!source) return;
 
     const newId = `show_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
-    const newShow: Show = {
-      ...source,
-      id: newId,
-      name: `${source.name} (COPIA)`,
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-    };
+    const newShow = duplicateShow(source, newId);
 
-    await storage.saveShow(newShow);
-    setShows((prev) => [...prev, newShow]);
-    await handleSelectShow(newId);
+    await persistAndActivateShow(newShow, {
+      saveShow: storage.saveShow.bind(storage),
+      addShow: (show) => setShows((prev) => [...prev, show]),
+      activate: activateShowInState,
+    });
   };
 
   const handleDeleteShow = async (showId: string) => {
@@ -559,7 +556,7 @@ export default function App() {
 
       await storage.saveShow(importedShow);
       setShows((prev) => [...prev, importedShow]);
-      await handleSelectShow(importedId);
+      await activateShowInState(importedShow);
       setIsShowsModalOpen(false);
       alert(`Show "${importedShow.name}" importado con éxito.`);
     } catch (err) {
