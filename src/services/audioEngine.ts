@@ -92,6 +92,21 @@ class AudioEngine {
     return this.masterVolume;
   }
 
+  /** Ask the browser to choose one permitted output device for all TAN FX audio. */
+  public async selectOutputDevice(): Promise<boolean> {
+    const mediaDevices = navigator.mediaDevices as MediaDevices & {
+      selectAudioOutput?: () => Promise<MediaDeviceInfo>;
+    };
+    const context = this.initContext() as AudioContext & {
+      setSinkId?: (deviceId: string) => Promise<void>;
+    };
+
+    if (!mediaDevices?.selectAudioOutput || !context.setSinkId) return false;
+    const device = await mediaDevices.selectAudioOutput();
+    await context.setSinkId(device.deviceId);
+    return true;
+  }
+
   // --- Buffer Loading & Decoding ---
   public async loadAudioBuffer(fileId: string, fileBlob?: Blob): Promise<AudioBuffer | null> {
     if (this.bufferCache.has(fileId)) {
