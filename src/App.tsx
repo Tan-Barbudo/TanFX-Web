@@ -439,6 +439,18 @@ export default function App() {
   const handleBgmStop = () => audioEngine.stopBgm();
   const handleBgmFade = (dur: number) => audioEngine.fadeBgm(dur);
 
+  const handleSelectOutputDevice = async () => {
+    try {
+      const selected = await audioEngine.selectOutputDevice();
+      if (!selected) {
+        alert('Este navegador no permite elegir la salida desde TAN FX. Cambia la salida de audio desde los ajustes rápidos de Android.');
+      }
+    } catch (err) {
+      console.error('Could not select audio output:', err);
+      alert('No se pudo cambiar la salida. Verifica los dispositivos conectados y selecciona la salida desde Android.');
+    }
+  };
+
   const handleBgmVolumeChange = (volume: number) => {
     audioEngine.setBgmVolume(volume);
     updateCurrentShow((show) => ({
@@ -650,6 +662,7 @@ export default function App() {
         onOpenShows={() => setIsShowsModalOpen(true)}
         onOpenAbout={() => setIsAboutModalOpen(true)}
         onToggleBgmBar={() => setIsBgmBarOpen((prev) => !prev)}
+        onSelectOutputDevice={handleSelectOutputDevice}
         isBgmPlaying={bgmStatus.isPlaying}
         activeSoundsCount={activeStatuses.size}
       />
