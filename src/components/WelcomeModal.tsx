@@ -32,8 +32,12 @@ export const WelcomeModal: React.FC<WelcomeModalProps> = ({ onClose }) => (
       </button>
 
       <div className="px-6 pb-6 pt-8 sm:px-8">
-        <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-2xl border border-cyan-400/50 bg-slate-900 shadow-[0_0_28px_rgba(6,182,212,0.2)]">
-          <img src={`${import.meta.env.BASE_URL}icon.svg`} alt="" className="h-16 w-16" />
+        <div className="mx-auto mb-4 h-36 w-36 overflow-hidden rounded-2xl border border-cyan-400/50 bg-black shadow-[0_0_28px_rgba(6,182,212,0.2)] sm:h-40 sm:w-40">
+          <img
+            src={`${import.meta.env.BASE_URL}tan-fx-mascot.jpg`}
+            alt="Payaso Tan Barbudo con auriculares frente a una consola de sonido"
+            className="h-full w-full object-contain"
+          />
         </div>
         <p className="mb-1 text-[11px] font-bold uppercase tracking-[0.22em] text-cyan-300">Bienvenido a</p>
         <h2 id="welcome-title" className="font-['Chakra_Petch',sans-serif] text-3xl font-black tracking-wider text-white">
