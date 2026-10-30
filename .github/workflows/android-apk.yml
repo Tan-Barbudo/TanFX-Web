@@ -28,6 +28,12 @@ jobs:
           distribution: temurin
           java-version: 21
 
+      - name: Restore stable signing key for future APK updates
+        uses: actions/cache@v4
+        with:
+          path: ~/.android/debug.keystore
+          key: tan-fx-android-debug-keystore-v1
+
       - name: Install dependencies
         run: npm install --no-audit --no-fund
 

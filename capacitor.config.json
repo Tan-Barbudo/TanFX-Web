@@ -1,5 +1,5 @@
 {
-  "appId": "com.tanbarbudo.tanfx",
+  "appId": "com.tanbarbudo.tanfx.app",
   "appName": "TAN FX",
   "webDir": "dist",
   "android": {
