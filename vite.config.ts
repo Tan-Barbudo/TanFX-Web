@@ -5,8 +5,9 @@ import {defineConfig} from 'vite';
 import {VitePWA} from 'vite-plugin-pwa';
 
 export default defineConfig(() => {
+  const basePath = process.env.VITE_BASE_PATH || '/TanFX-Web/';
   return {
-    base: '/TanFX-Web/',
+    base: basePath,
     plugins: [
       react(),
       tailwindcss(),
@@ -15,7 +16,7 @@ export default defineConfig(() => {
         manifestFilename: 'manifest.json',
         includeAssets: ['icon.svg', 'apple-touch-icon.png', 'pwa-192x192.png', 'pwa-512x512.png', 'manifest.json'],
         manifest: {
-          id: '/TanFX-Web/',
+          id: basePath,
           name: 'TAN FX - Performance Soundboard',
           short_name: 'TAN FX',
           description: 'Consola profesional de sonido para shows en vivo diseñada por Payaso Tan Barbudo para payasos, animadores, magos, iglesias y artistas en vivo.',
@@ -24,33 +25,33 @@ export default defineConfig(() => {
           display: 'standalone',
           display_override: ['window-controls-overlay', 'standalone', 'minimal-ui'],
           orientation: 'any',
-          start_url: '/TanFX-Web/',
-          scope: '/TanFX-Web/',
+          start_url: basePath,
+          scope: basePath,
           lang: 'es',
           dir: 'ltr',
           categories: ['music', 'entertainment', 'productivity', 'utilities'],
           prefer_related_applications: false,
           icons: [
             {
-              src: '/TanFX-Web/pwa-192x192.png',
+              src: `${basePath}pwa-192x192.png`,
               sizes: '192x192',
               type: 'image/png',
               purpose: 'any',
             },
             {
-              src: '/TanFX-Web/pwa-512x512.png',
+              src: `${basePath}pwa-512x512.png`,
               sizes: '512x512',
               type: 'image/png',
               purpose: 'any',
             },
             {
-              src: '/TanFX-Web/pwa-maskable-512x512.png',
+              src: `${basePath}pwa-maskable-512x512.png`,
               sizes: '512x512',
               type: 'image/png',
               purpose: 'maskable',
             },
             {
-              src: '/TanFX-Web/icon.svg',
+              src: `${basePath}icon.svg`,
               sizes: 'any',
               type: 'image/svg+xml',
               purpose: 'any',
@@ -61,10 +62,10 @@ export default defineConfig(() => {
               name: 'Consola TAN FX',
               short_name: 'Consola',
               description: 'Abrir soundboard de presentación en vivo',
-              url: '/TanFX-Web/',
+              url: basePath,
               icons: [
                 {
-                  src: '/TanFX-Web/pwa-192x192.png',
+                  src: `${basePath}pwa-192x192.png`,
                   sizes: '192x192',
                   type: 'image/png',
                 },
@@ -74,7 +75,7 @@ export default defineConfig(() => {
         },
         workbox: {
           globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
-          navigateFallback: '/TanFX-Web/index.html',
+          navigateFallback: `${basePath}index.html`,
           runtimeCaching: [
             {
               urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
