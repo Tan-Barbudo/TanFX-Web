@@ -1,0 +1,8 @@
+{
+  "appId": "com.tanbarbudo.tanfx",
+  "appName": "TAN FX",
+  "webDir": "dist",
+  "android": {
+    "allowMixedContent": false
+  }
+}
