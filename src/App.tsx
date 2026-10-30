@@ -633,6 +633,7 @@ export default function App() {
           <span className="w-3 h-3 rounded-full bg-cyan-400 animate-ping" />
           <span>INICIALIZANDO TAN FX PERFORMANCE SOUNDBOARD...</span>
         </div>
+        {isWelcomeOpen && <WelcomeModal onClose={() => setIsWelcomeOpen(false)} />}
       </div>
     );
   }
