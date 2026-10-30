@@ -13,6 +13,7 @@ import { AboutModal } from './components/AboutModal';
 import { OfflineIndicator } from './components/OfflineIndicator';
 import { NameAudioModal } from './components/NameAudioModal';
 import { PadContextMenu } from './components/PadContextMenu';
+import { WelcomeModal } from './components/WelcomeModal';
 
 // 24 Keys mapped across rows 1..4
 const KEY_MAP: Record<string, number> = {
@@ -35,6 +36,7 @@ export default function App() {
   const [selectedPadForSettings, setSelectedPadForSettings] = useState<SoundPad | null>(null);
   const [isShowsModalOpen, setIsShowsModalOpen] = useState<boolean>(false);
   const [isAboutModalOpen, setIsAboutModalOpen] = useState<boolean>(false);
+  const [isWelcomeOpen, setIsWelcomeOpen] = useState<boolean>(true);
   const [isBgmBarOpen, setIsBgmBarOpen] = useState<boolean>(false);
 
   // Custom Audio Naming & Context Menu (Requirements 1, 2, 3, 4, 9, 10)
@@ -806,6 +808,9 @@ export default function App() {
 
       {/* 8. PWA OFFLINE CONNECTIVITY INDICATOR */}
       <OfflineIndicator />
+
+      {/* Welcome and creator social links */}
+      {isWelcomeOpen && <WelcomeModal onClose={() => setIsWelcomeOpen(false)} />}
     </div>
   );
 }
