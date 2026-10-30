@@ -1,5 +1,5 @@
 import React from 'react';
-import { Volume2, VolumeX, Square, Pause, Flame, Lock, Unlock, FolderOpen, Info, Music } from 'lucide-react';
+import { Volume2, VolumeX, Square, Pause, Flame, Lock, Unlock, FolderOpen, Info, Music, Headphones } from 'lucide-react';
 import { PWAInstallButton } from './PWAInstallButton';
 
 interface HeaderProps {
@@ -16,6 +16,7 @@ interface HeaderProps {
   onOpenShows: () => void;
   onOpenAbout: () => void;
   onToggleBgmBar: () => void;
+  onSelectOutputDevice: () => void;
   isBgmPlaying: boolean;
   activeSoundsCount: number;
 }
@@ -34,6 +35,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenShows,
   onOpenAbout,
   onToggleBgmBar,
+  onSelectOutputDevice,
   isBgmPlaying,
   activeSoundsCount,
 }) => {
@@ -121,6 +123,16 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
 
         {/* BGM Toggle button */}
+        <button
+          id="btn-select-audio-output"
+          onClick={onSelectOutputDevice}
+          className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border bg-slate-800/80 hover:bg-slate-700 border-slate-700 text-slate-300 text-xs font-semibold transition"
+          title="Elegir parlante, auricular o dispositivo Bluetooth (si el navegador lo permite)"
+        >
+          <Headphones className="w-3.5 h-3.5 text-cyan-400" />
+          <span className="hidden sm:inline">SALIDA</span>
+        </button>
+
         <button
           id="btn-toggle-bgm"
           onClick={onToggleBgmBar}

@@ -1,0 +1,8 @@
+{
+  "appId": "com.tanbarbudo.tanfx.app",
+  "appName": "TAN FX NUEVA",
+  "webDir": "dist",
+  "android": {
+    "allowMixedContent": false
+  }
+}

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { Show, Bank, SoundPad, PadPlaybackStatus, BgmPlaybackStatus } from './types';
 import { storage, createEmptyBank, createDefaultShow } from './services/storage';
 import { audioEngine } from './services/audioEngine';
+import { activateShow, duplicateShow, persistAndActivateShow, resolveInitialShow } from './services/showManagement';
 import { Header } from './components/Header';
 import { BankBar } from './components/BankBar';
 import { PadGrid } from './components/PadGrid';
@@ -12,6 +13,7 @@ import { AboutModal } from './components/AboutModal';
 import { OfflineIndicator } from './components/OfflineIndicator';
 import { NameAudioModal } from './components/NameAudioModal';
 import { PadContextMenu } from './components/PadContextMenu';
+import { WelcomeModal } from './components/WelcomeModal';
 
 // 24 Keys mapped across rows 1..4
 const KEY_MAP: Record<string, number> = {
@@ -34,6 +36,7 @@ export default function App() {
   const [selectedPadForSettings, setSelectedPadForSettings] = useState<SoundPad | null>(null);
   const [isShowsModalOpen, setIsShowsModalOpen] = useState<boolean>(false);
   const [isAboutModalOpen, setIsAboutModalOpen] = useState<boolean>(false);
+  const [isWelcomeOpen, setIsWelcomeOpen] = useState<boolean>(true);
   const [isBgmBarOpen, setIsBgmBarOpen] = useState<boolean>(false);
 
   // Custom Audio Naming & Context Menu (Requirements 1, 2, 3, 4, 9, 10)
@@ -75,7 +78,7 @@ export default function App() {
 
         setShows(loadedShows);
         const storedActiveId = await storage.getActiveShowId();
-        const initialShow = (storedActiveId && loadedShows.find((s) => s.id === storedActiveId)) || loadedShows[0];
+        const initialShow = resolveInitialShow(loadedShows, storedActiveId);
 
         if (initialShow) {
           setActiveShowId(initialShow.id);
@@ -89,6 +92,8 @@ export default function App() {
             audioEngine.setBgmVolume(initialShow.bgm.volume);
             audioEngine.setBgmLoop(initialShow.bgm.loop);
             audioEngine.setBgmDuckLevel(initialShow.bgm.duckLevel);
+          } else {
+            audioEngine.clearBgmTrack();
           }
         }
       } catch (err) {
@@ -436,6 +441,18 @@ export default function App() {
   const handleBgmStop = () => audioEngine.stopBgm();
   const handleBgmFade = (dur: number) => audioEngine.fadeBgm(dur);
 
+  const handleSelectOutputDevice = async () => {
+    try {
+      const selected = await audioEngine.selectOutputDevice();
+      if (!selected) {
+        alert('Este navegador no permite elegir la salida desde TAN FX. Cambia la salida de audio desde los ajustes rápidos de Android.');
+      }
+    } catch (err) {
+      console.error('Could not select audio output:', err);
+      alert('No se pudo cambiar la salida. Verifica los dispositivos conectados y selecciona la salida desde Android.');
+    }
+  };
+
   const handleBgmVolumeChange = (volume: number) => {
     audioEngine.setBgmVolume(volume);
     updateCurrentShow((show) => ({
@@ -461,31 +478,29 @@ export default function App() {
   };
 
   // Show Management Handlers
+  const activateShowInState = (show: Show) =>
+    activateShow(show, {
+      storage,
+      audioEngine,
+      setActiveShowId,
+      setActiveBankId,
+      setMasterVolume,
+    });
+
   const handleSelectShow = async (showId: string) => {
     const targetShow = shows.find((s) => s.id === showId);
     if (!targetShow) return;
-
-    setActiveShowId(targetShow.id);
-    setActiveBankId(targetShow.activeBankId || targetShow.banks[0]?.id || '');
-    setMasterVolume(targetShow.masterVolume ?? 1.0);
-    audioEngine.setMasterVolume(targetShow.masterVolume ?? 1.0);
-    await storage.setActiveShowId(targetShow.id);
-
-    if (targetShow.bgm.fileId) {
-      audioEngine.setBgmTrack(targetShow.bgm.fileId).catch(console.error);
-      audioEngine.setBgmVolume(targetShow.bgm.volume);
-      audioEngine.setBgmLoop(targetShow.bgm.loop);
-      audioEngine.setBgmDuckLevel(targetShow.bgm.duckLevel);
-    }
+    await activateShowInState(targetShow);
   };
 
   const handleCreateShow = async (name: string) => {
     const newId = `show_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
     const newShow = createDefaultShow(newId, name);
-    await storage.saveShow(newShow);
-
-    setShows((prev) => [...prev, newShow]);
-    await handleSelectShow(newId);
+    await persistAndActivateShow(newShow, {
+      saveShow: storage.saveShow.bind(storage),
+      addShow: (show) => setShows((prev) => [...prev, show]),
+      activate: activateShowInState,
+    });
   };
 
   const handleRenameShow = async (showId: string, newName: string) => {
@@ -506,17 +521,13 @@ export default function App() {
     if (!source) return;
 
     const newId = `show_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
-    const newShow: Show = {
-      ...source,
-      id: newId,
-      name: `${source.name} (COPIA)`,
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-    };
+    const newShow = duplicateShow(source, newId);
 
-    await storage.saveShow(newShow);
-    setShows((prev) => [...prev, newShow]);
-    await handleSelectShow(newId);
+    await persistAndActivateShow(newShow, {
+      saveShow: storage.saveShow.bind(storage),
+      addShow: (show) => setShows((prev) => [...prev, show]),
+      activate: activateShowInState,
+    });
   };
 
   const handleDeleteShow = async (showId: string) => {
@@ -559,7 +570,7 @@ export default function App() {
 
       await storage.saveShow(importedShow);
       setShows((prev) => [...prev, importedShow]);
-      await handleSelectShow(importedId);
+      await activateShowInState(importedShow);
       setIsShowsModalOpen(false);
       alert(`Show "${importedShow.name}" importado con éxito.`);
     } catch (err) {
@@ -622,6 +633,7 @@ export default function App() {
           <span className="w-3 h-3 rounded-full bg-cyan-400 animate-ping" />
           <span>INICIALIZANDO TAN FX PERFORMANCE SOUNDBOARD...</span>
         </div>
+        {isWelcomeOpen && <WelcomeModal onClose={() => setIsWelcomeOpen(false)} />}
       </div>
     );
   }
@@ -653,6 +665,7 @@ export default function App() {
         onOpenShows={() => setIsShowsModalOpen(true)}
         onOpenAbout={() => setIsAboutModalOpen(true)}
         onToggleBgmBar={() => setIsBgmBarOpen((prev) => !prev)}
+        onSelectOutputDevice={handleSelectOutputDevice}
         isBgmPlaying={bgmStatus.isPlaying}
         activeSoundsCount={activeStatuses.size}
       />
@@ -796,6 +809,9 @@ export default function App() {
 
       {/* 8. PWA OFFLINE CONNECTIVITY INDICATOR */}
       <OfflineIndicator />
+
+      {/* Welcome and creator social links */}
+      {isWelcomeOpen && <WelcomeModal onClose={() => setIsWelcomeOpen(false)} />}
     </div>
   );
 }

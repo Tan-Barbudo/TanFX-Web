@@ -38,6 +38,8 @@ class AudioEngine {
 
   // BGM playback
   private bgmAudio: HTMLAudioElement | null = null;
+  private bgmObjectUrl: string | null = null;
+  private bgmLoadVersion = 0;
   private bgmSource: MediaElementAudioSourceNode | null = null;
   private bgmFileId: string | null = null;
   private bgmTargetVolume: number = 0.8;
@@ -88,6 +90,21 @@ class AudioEngine {
 
   public getMasterVolume(): number {
     return this.masterVolume;
+  }
+
+  /** Ask the browser to choose one permitted output device for all TAN FX audio. */
+  public async selectOutputDevice(): Promise<boolean> {
+    const mediaDevices = navigator.mediaDevices as MediaDevices & {
+      selectAudioOutput?: () => Promise<MediaDeviceInfo>;
+    };
+    const context = this.initContext() as AudioContext & {
+      setSinkId?: (deviceId: string) => Promise<void>;
+    };
+
+    if (!mediaDevices?.selectAudioOutput || !context.setSinkId) return false;
+    const device = await mediaDevices.selectAudioOutput();
+    await context.setSinkId(device.deviceId);
+    return true;
   }
 
   // --- Buffer Loading & Decoding ---
@@ -278,8 +295,6 @@ class AudioEngine {
 
   // --- Master Stop / Fade / Pause ---
   public stopAll(includeBgm: boolean = false): void {
-    if (!this.ctx) return;
-
     // Immediately stop all pads
     const padIds = Array.from(this.activePads.keys());
     for (const id of padIds) {
@@ -289,6 +304,8 @@ class AudioEngine {
     if (includeBgm) {
       this.stopBgm();
     }
+
+    if (!this.ctx) return;
 
     this.notifyStatus();
   }
@@ -327,6 +344,7 @@ class AudioEngine {
 
   // --- Background Music (BGM) Channel ---
   public async setBgmTrack(fileId: string, blob?: Blob): Promise<boolean> {
+    const loadVersion = ++this.bgmLoadVersion;
     this.stopBgm();
     this.bgmFileId = fileId;
 
@@ -338,15 +356,16 @@ class AudioEngine {
 
     if (!fileBlob) return false;
 
+    // A slower lookup from a previously selected show must not replace the current track.
+    if (loadVersion !== this.bgmLoadVersion) return false;
+
     const ctx = this.initContext();
     const url = URL.createObjectURL(fileBlob);
 
-    if (this.bgmAudio) {
-      this.bgmAudio.pause();
-      this.bgmAudio.src = '';
-    }
+    this.releaseBgmAudio();
 
     this.bgmAudio = new Audio(url);
+    this.bgmObjectUrl = url;
     this.bgmAudio.loop = this.bgmIsLoop;
     this.bgmAudio.crossOrigin = 'anonymous';
 
@@ -364,6 +383,28 @@ class AudioEngine {
     };
 
     return true;
+  }
+
+  public clearBgmTrack(): void {
+    // Invalidate any pending asynchronous load before releasing the old media element.
+    this.bgmLoadVersion++;
+    this.stopBgm();
+    this.bgmFileId = null;
+    this.releaseBgmAudio();
+  }
+
+  private releaseBgmAudio(): void {
+    if (this.bgmAudio) {
+      this.bgmAudio.pause();
+      this.bgmAudio.removeAttribute('src');
+      this.bgmAudio.load();
+      this.bgmAudio = null;
+    }
+    this.bgmSource = null;
+    if (this.bgmObjectUrl) {
+      URL.revokeObjectURL(this.bgmObjectUrl);
+      this.bgmObjectUrl = null;
+    }
   }
 
   public playBgm(): void {
