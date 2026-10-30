@@ -1,4 +1,5 @@
 node_modules/
+android/
 build/
 dist/
 coverage/
